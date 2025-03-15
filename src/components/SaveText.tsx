@@ -68,6 +68,19 @@ const SaveText = () => {
         if (currentColor) {
             setColor(convertColor(currentColor));
         }
+
+        // Detect font size
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const parentElement = range.commonAncestorContainer.parentElement;
+
+            if (parentElement) {
+                const computedStyle = window.getComputedStyle(parentElement);
+                const fontSizeValue = parseInt(computedStyle.fontSize, 10);
+                setFontSize(fontSizeValue); // Update state with detected font size
+            }
+        }
     };
 
     // Listen for selection changes (mouse and keyboard events)
@@ -104,23 +117,48 @@ const SaveText = () => {
         applyCommand("fontName", newFont);
     };
 
-    // Note: execCommand('fontSize') accepts values 1–7. Here we use the number directly.
-    const handleFontSizeDecrease = () => {
-        const newSize = Math.max(10, fontSize - 1);
-        setFontSize(newSize);
-        applyCommand("fontSize", newSize);
+    const applyInlineStyle = (style: string, value: string) => {
+        if (!editorRef.current) return;
+
+        document.execCommand("styleWithCSS", false, "true");
+        document.execCommand("foreColor", false, color); // Ensure color is preserved
+        document.execCommand("insertHTML", false, `<span style="${style}: ${value}">${document.getSelection()}</span>`);
     };
 
     const handleFontSizeIncrease = () => {
         const newSize = fontSize + 1;
         setFontSize(newSize);
-        applyCommand("fontSize", newSize);
+
+        const selection = window.getSelection();
+
+        if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+            // Apply font size to selected text
+            applyInlineStyle("font-size", `${newSize}px`);
+        } else {
+            // Insert a span at cursor position to apply new font size
+            document.execCommand("insertHTML", false, `<span style="font-size: ${newSize}px;">&#8203;</span>`);
+        }
+    };
+
+    const handleFontSizeDecrease = () => {
+        const newSize = Math.max(10, fontSize - 1);
+        setFontSize(newSize);
+
+        const selection = window.getSelection();
+
+        if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+            // Apply font size to selected text
+            applyInlineStyle("font-size", `${newSize}px`);
+        } else {
+            // Insert a span at cursor position to apply new font size
+            document.execCommand("insertHTML", false, `<span style="font-size: ${newSize}px;">&#8203;</span>`);
+        }
     };
 
     const handleFontSizeInputChange = (value: number) => {
         const newSize = Math.max(10, value);
         setFontSize(newSize);
-        applyCommand("fontSize", newSize);
+        applyInlineStyle("font-size", `${newSize}px`);
     };
 
     const handleTextAlignToggle = () => {

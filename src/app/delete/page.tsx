@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react"; // Import Trash Icon
+import { Trash2 } from "lucide-react";
+import parse from "html-react-parser";
+import dayjs from "dayjs";
 
 interface TextData {
-  text: string;
-  font: string;
-  color: string;
-  style: string;
-  fontSize: number;
+  content: string;
+  timestamp: string;
 }
 
 export default function DeletePage() {
@@ -24,20 +23,15 @@ export default function DeletePage() {
 
   const showMessage = (msg: string) => {
     setMessage(msg);
-    setTimeout(() => setMessage(null), 5000); // Hide after 5 seconds
+    setTimeout(() => setMessage(null), 5000);
   };
 
   const fetchText = async () => {
     try {
-      const response = await fetch("/text/text.json"); // Ensure correct path
+      const response = await fetch("/text/text.json");
       if (!response.ok) throw new Error("Text not found");
       const data: TextData[] = await response.json();
-      if (Array.isArray(data)) {
-        setTextEntries(data);
-      } else {
-        console.warn("Unexpected text format, resetting to array.");
-        setTextEntries([]);
-      }
+      setTextEntries(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching text:", error);
       setTextEntries([]);
@@ -79,7 +73,6 @@ export default function DeletePage() {
 
   const handleDeleteImage = async (filename: string) => {
     setLoading(true);
-
     try {
       const response = await fetch("/api/delete", {
         method: "POST",
@@ -90,17 +83,12 @@ export default function DeletePage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to delete image");
 
-      // Wait a short moment before fetching again to ensure file deletion is complete
-      setTimeout(() => {
-        fetchImages(); // Refresh image list after deletion
-      }, 500);
-
+      setTimeout(fetchImages, 500);
       showMessage("Image deleted successfully!");
     } catch (error) {
       showMessage("Failed to delete image.");
       console.error(error);
     }
-
     setLoading(false);
   };
 
@@ -121,18 +109,16 @@ export default function DeletePage() {
           {textEntries.map((entry, index) => (
             <div
               key={index}
-              className="border border-gray-300 p-4 rounded flex justify-between items-center"
-              style={{
-                fontFamily: entry.font,
-                color: entry.color,
-                fontStyle: entry.style.includes("italic") ? "italic" : "normal",
-                fontWeight: entry.style.includes("bold") ? "bold" : "normal",
-                fontSize: entry.fontSize,
-              }}
+              className="border border-gray-300 p-4 rounded flex justify-between items-start"
             >
-              <p>{entry.text}</p>
+              <div>
+                <div className="text-sm text-gray-500 mb-2">
+                  {dayjs(entry.timestamp).format("YYYY-MM-DD HH:mm:ss")}
+                </div>
+                <div className="prose">{parse(entry.content)}</div>
+              </div>
               <Trash2
-                className="text-red-500 cursor-pointer hover:scale-110 transition-transform mx-3"
+                className="text-red-500 cursor-pointer hover:scale-110 transition-transform ml-3"
                 size={30}
                 onClick={() => handleDeleteText(index)}
               />
@@ -148,7 +134,11 @@ export default function DeletePage() {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
           {images.map((img, index) => (
             <div key={index} className="relative">
-              <img src={img} alt="Uploaded" className="rounded-lg shadow-md w-full h-40 object-cover" />
+              <img
+                src={img}
+                alt="Uploaded"
+                className="rounded-lg shadow-md w-full h-40 object-cover"
+              />
               <Trash2
                 className="absolute top-2 right-2 text-red-500 cursor-pointer hover:scale-110 transition-transform mx-3"
                 size={30}

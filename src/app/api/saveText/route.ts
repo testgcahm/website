@@ -4,10 +4,10 @@ import path from "path";
 
 export async function POST(req: NextRequest) {
   try {
-    const { text, font, color, style, fontSize, textAlign } = await req.json();
+    const { content } = await req.json();
 
-    if (!text.trim()) {
-      return NextResponse.json({ error: "Text cannot be empty" }, { status: 400 });
+    if (!content || !content.trim() || content === "<br>") {
+      return NextResponse.json({ error: "Text content cannot be empty." }, { status: 400 });
     }
 
     // Ensure uploads directory exists
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     const filePath = path.join(dir, "text.json");
 
     // Read existing data if file exists
-    let existingData: any[] = [];
+    let existingData = [];
     if (fs.existsSync(filePath)) {
       const fileContent = fs.readFileSync(filePath, "utf-8");
       try {
@@ -34,7 +34,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Append new entry
-    const newEntry = { text, font, color, style, fontSize, textAlign, timestamp: new Date().toISOString() };
+    const newEntry = {
+      content,
+      timestamp: new Date().toISOString(),
+    };
     existingData.push(newEntry);
 
     // Save updated data

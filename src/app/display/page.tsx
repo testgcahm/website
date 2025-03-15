@@ -3,13 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { useGesture } from "@use-gesture/react";
+import parse from "html-react-parser";
+import dayjs from "dayjs";
 
 interface TextData {
-  text: string;
-  font: string;
-  color: string;
-  style: string;
-  fontSize: number;
+  content: string;
+  timestamp: string;
 }
 
 export default function DisplayPage() {
@@ -45,7 +44,6 @@ export default function DisplayPage() {
     fetchImages();
   }, []);
 
-  // Close modal on ESC key press
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === "Escape") setSelectedImage(null);
   }, []);
@@ -53,19 +51,17 @@ export default function DisplayPage() {
   useEffect(() => {
     if (selectedImage) {
       window.addEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "hidden"; // Prevent scrolling when modal is open
+      document.body.style.overflow = "hidden";
     } else {
       window.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "auto"; // Restore scrolling
+      document.body.style.overflow = "auto";
     }
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "auto";
     };
   }, [selectedImage, handleKeyDown]);
 
-  // Gesture controls (swipe to close, prevent accidental closing on PC)
   const bind = useGesture({
     onDrag: () => setIsDragging(true),
     onDragEnd: ({ movement: [mx, my], intentional }) => {
@@ -76,7 +72,6 @@ export default function DisplayPage() {
     },
   });
 
-  // Handle mouse clicks: Close only if not dragging
   const handleMouseClick = () => {
     if (!isDragging) {
       setSelectedImage(null);
@@ -84,25 +79,16 @@ export default function DisplayPage() {
   };
 
   return (
-    <div className="p-6 max-w-lg mx-auto">
+    <div className="p-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-center">Display Page</h1>
 
-      {/* Display multiple text entries */}
+      {/* Text Entries Section */}
       {textEntries.length > 0 ? (
         <div className="space-y-4 mt-4">
           {textEntries.map((entry, index) => (
-            <div
-              key={index}
-              className="p-4 rounded-lg shadow-md border"
-              style={{
-                fontFamily: entry.font,
-                color: entry.color,
-                fontStyle: entry.style.includes("italic") ? "italic" : "normal",
-                fontWeight: entry.style.includes("bold") ? "bold" : "normal",
-                fontSize: entry.fontSize,
-              }}
-            >
-              {entry.text}
+            <div key={index} className="p-4 rounded-lg shadow-md border">
+              <p className="text-gray-500 text-sm">{dayjs(entry.timestamp).format("YYYY-MM-DD HH:mm")}</p>
+              <div>{parse(entry.content)}</div>
             </div>
           ))}
         </div>
@@ -110,21 +96,22 @@ export default function DisplayPage() {
         <p className="text-gray-500 text-center mt-4">No text available</p>
       )}
 
-      {/* Display images with lightbox effect */}
-      <div className="grid grid-cols-2 gap-4 mt-6">
+      {/* Images Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-[220px] gap-y-6 mt-6 place-items-center">
         {images.length > 0 ? (
           images.map((img, index) => (
             <div
               key={index}
-              className="relative w-full h-40 cursor-pointer"
+              className="relative cursor-pointer overflow-hidden rounded-lg shadow-md bg-gray-100 flex items-center justify-center w-[250px] h-[200px]"
               onClick={() => setSelectedImage(img)}
             >
               <Image
                 src={img}
                 alt="Uploaded"
-                width={200}
+                width={250}
                 height={200}
-                className="rounded-lg shadow-md object-cover"
+                className="object-contain w-full h-full transition-transform hover:scale-105"
+                loading="lazy"
                 onError={() => console.error("Image failed to load:", img)}
               />
             </div>
@@ -134,8 +121,7 @@ export default function DisplayPage() {
         )}
       </div>
 
-      {/* Full-screen modal for image */}
-      {/* Full-screen modal for image */}
+      {/* Fullscreen Image Viewer */}
       {selectedImage && (
         <div
           className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-90 z-50"
@@ -148,12 +134,11 @@ export default function DisplayPage() {
                 src={selectedImage}
                 alt="Enlarged"
                 fill
-                style={{ objectFit: "contain" }} // Ensures full image is visible without cropping
+                style={{ objectFit: "contain" }}
                 className="rounded-lg shadow-lg"
               />
             </div>
 
-            {/* Close Button */}
             <button
               className="absolute top-4 right-4 text-white cursor-pointer bg-gray-900 rounded-full p-2 px-[14px] text-xl font-bold"
               onClick={() => setSelectedImage(null)}
@@ -163,7 +148,6 @@ export default function DisplayPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
