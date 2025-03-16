@@ -86,8 +86,7 @@ export default function DisplayPage() {
       {textEntries.length > 0 ? (
         <div className="space-y-4 mt-4">
           {textEntries.map((entry, index) => (
-            <div key={index} className="p-4 rounded-lg shadow-md border">
-              <p className="text-gray-500 text-sm">{dayjs(entry.timestamp).format("YYYY-MM-DD HH:mm")}</p>
+            <div key={index} className="p-4 rounded-lg shadow-md border-gray-300 border">
               <div>{parse(entry.content)}</div>
             </div>
           ))}
@@ -97,12 +96,12 @@ export default function DisplayPage() {
       )}
 
       {/* Images Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-[220px] gap-y-6 mt-6 place-items-center">
+      <div className="grid max-csm:grid-cols-1 grid-cols-2 cmd:grid-cols-3 cmd:gap-x-[220px] mx-2 gap-6 mt-6 place-items-center">
         {images.length > 0 ? (
           images.map((img, index) => (
             <div
               key={index}
-              className="relative cursor-pointer overflow-hidden rounded-lg shadow-md bg-gray-100 flex items-center justify-center w-[250px] h-[200px]"
+              className="relative cursor-pointer overflow-hidden rounded-lg shadow-md bg-gray-100 flex items-center justify-center cxs:max-csm:w-[300px] cxs:max-csm:h-[300px] w-[250px] h-[200px]"
               onClick={() => setSelectedImage(img)}
             >
               <Image
